@@ -1,6 +1,7 @@
 import cluster from 'cluster';
 import os from 'os';
-import { startHttpServer } from './index';
+import { Safe } from './common/safe_access/safe';
+import { heartbeatReq, heartbeatRes, startHttpServer } from './index';
 const numCPUs = os.cpus().length;
 
 if (cluster.isMaster) {
@@ -8,14 +9,17 @@ if (cluster.isMaster) {
 
   // Fork workers.
   for (let i = 0; i < numCPUs; i++) {
-    cluster.fork();
+    forkNewWorker();
   }
 
   // 进程保活
   cluster.on('exit', (worker, code, signal) => {
-    console.log(`worker ${worker.process.pid} died`);
-    if (worker.isDead()) {
-      cluster.fork();
+    console.log(`worker ${worker.process.pid} died!`);
+    const workers = Object.keys(cluster.workers);
+    if (worker.isDead() && workers.length <= numCPUs) {
+      setTimeout(() => {
+        forkNewWorker();
+      }, 1000);
     }
   });
 
@@ -35,13 +39,12 @@ if (cluster.isMaster) {
       worker?.disconnect();
 
       worker?.on('exit', () => {
-        if (!worker.isDead()) {
-          return;
+        if (worker.isDead()) {
+          const newWorker = forkNewWorker();
+          newWorker.on('listening', () => {
+            restartWorker(i + 1);
+          });
         }
-        const newWorker = cluster.fork();
-        newWorker.on('listening', () => {
-          restartWorker(i + 1);
-        });
       });
     }
 
@@ -52,4 +55,31 @@ if (cluster.isMaster) {
   // Workers can share any TCP connection
   // In this case it is an HTTP server
   startHttpServer();
+}
+
+function forkNewWorker(): cluster.Worker {
+  const worker = cluster.fork();
+  // 发送心跳包，防假死
+  let miss = 0
+  const interval = setInterval(() => {
+    worker.send?.(heartbeatReq);
+    miss++;
+
+    // 错过3次心跳检测，判为假死状态，杀掉进程。
+    if (miss >= 3) {
+      clearInterval(interval);
+      console.log(`Miss ${miss} heartbeat!`);
+      process.kill(worker.process.pid, 1);
+    }
+
+  }, 5000);
+
+  worker.on('message', (msg) => {
+    if ( Safe.stringEqual(msg, heartbeatRes) ) {
+      console.log(msg, worker.process.pid);
+      miss--;
+    }
+  });
+
+  return worker;
 }

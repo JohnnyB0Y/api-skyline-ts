@@ -16,6 +16,10 @@ import helmet from "helmet";
 import { itemsRouter } from "./items/items.router";
 import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
+import { Safe } from "./common/safe_access/safe";
+
+export const heartbeatReq = 'ping';
+export const heartbeatRes = 'pong';
 
 export function startHttpServer() {
 
@@ -49,21 +53,45 @@ export function startHttpServer() {
    * Server Activation
    */
 
-   process.on('uncaughtException', err => {
-    console.log(`process uncaughtException ${err}`);
-
-    setTimeout(() => {
-      // 500毫秒后，退出进程
-      process.exit();
-    }, 500);
-  });
-
   app.listen(PORT, () => {
     console.log(`Listening on prot ${PORT}, pid ${process.pid}`);
 
     setTimeout(() => {
-      // 模拟抛异常
-      // throw new Error('Ooops!!!!!!!!');
-    }, Math.ceil(Math.random() * 3) * 1000);
+      // 模拟抛异常和阻塞
+      // 模拟并发 siege -c 200 -t 10s http://localhost:7000/api/menu/items
+      if (process.pid % 2 === 0) {
+        throw new Error('Ooops!!!!!!!!');
+      }
+      else {
+        while(true) {
+        }
+      }
+
+    }, Math.ceil(Math.random() * 3) * 3000);
+
   });
+
+  // 未知异常处理
+  process.on('uncaughtException', err => {
+    console.log(`Process uncaughtException ${err}.`);
+    process.exit(1);
+  });
+
+  // 内存泄漏监控
+  setInterval(() => {
+    if ( process.memoryUsage().rss > 800 * 1024 * 1024 ) {
+      // 内存大于 800M，为内存泄漏
+      console.log(`Memory leak.`);
+      process.exit(1);
+    }
+  }, 10000);
+
+  process.on('message', (msg) => {
+    // 💓 心跳检测
+    if (Safe.stringEqual(msg, heartbeatReq)) {
+      console.log(msg, process.pid);
+      process.send?.(heartbeatRes);
+    }
+  });
+
 }
