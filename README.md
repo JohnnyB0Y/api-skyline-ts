@@ -163,6 +163,46 @@ const redis = require('redis');
 - 手机验证码发送频率，降低成本问题；
 ```
 
+## NodeJS Tips
+```JS
+1，设计函数API，不要让其在某种条件下异步执行，其他条件下同步执行。
+- 关键在于，这种函数包含不可预测性，上层调用者无法正确的处理各种情况。
+- 可以通过把函数内异步执行的代码转换成同步执行，让函数变成同步函数。
+- 也可以通过使用 process.nextTick() 让同步代码延迟执行以实现异步执行回调，让函数变成异步函数。
+
+2，回调函数置尾
+- fs.readFile(filename, [options], callback)
+
+3，暴露错误优先
+- NodeJS 总是把函数产生的任何错误作为回调的第一个参数传递，且类型始终为 Error类型。
+- 如果操作成功，第一个参数将为 null 或 undefined 。
+fs.readFile('LA.txt', 'utf8', (err, data) => {
+  if (err)
+    handleError(err)
+  else
+    processData(data)
+})
+
+4，在异步函数中，用传递错误替代抛异常。
+- 在同步函数，使用抛异常来传递错误。错误会在调用栈中跳转，直到它被捕获。
+- 而在异步函数，回调代码没有 try{}catch(e){} 的情况下，如果出现异常，将会中断当前代码的执行。
+- 并且控制权将被传递到调用堆栈的第一个catch块，此时会发出 'uncaughtException' 事件。
+- 因此，在异步回调代码中，把可能出错的代码用catch块包裹，出现错误就传递出去。（参考第3条）
+
+5，如果一个对象有太多状态变化或操作事件需要传递给外界，那么就让该对象可观察。
+- 而让一个对象可观察的最好方法，就是让其继承自 EventEmitter对象。
+- 当对象内部发射事件时，应考虑外界能否在事件发射前注册监听器。
+
+```
+
+## JavaScript Tips
+```JS
+1，用 for (variable in object) 语句以任意顺序遍历一个对象的（除Symbol以外的）可枚举属性。
+
+2，用 for (variable of iterable) 语句遍历迭代对象（Array，Map，Set，String，TypedArray，arguments 等）。
+
+```
+
 ## 参考资料
 ##### 项目配置
 [Node.js and TypeScript Tutorial: Build a CRUD API](https://auth0.com/blog/node-js-and-typescript-tutorial-build-a-crud-api/)
@@ -184,3 +224,5 @@ const redis = require('redis');
 
 ##### 文档
 [Node.js v15.12.0 Documentation](https://nodejs.org/api/errors.html)
+
+[JS语句和声明](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Statements)

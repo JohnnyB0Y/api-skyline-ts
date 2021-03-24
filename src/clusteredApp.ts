@@ -1,4 +1,5 @@
 import cluster from 'cluster';
+import EventEmitter from 'node:events';
 import os from 'os';
 import { Safe } from './common/safe_access/safe';
 import { heartbeatReq, heartbeatRes, startHttpServer } from './index';
