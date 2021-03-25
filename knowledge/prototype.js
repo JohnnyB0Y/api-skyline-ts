@@ -29,11 +29,11 @@ function Foo() {
 }
 
 // new 关键字创建对象
-const foo = new Foo()
+let foo = new Foo()
 console.log(foo.fullname())
 
 // 近似于
-const foo = new Object()
+foo = new Object()
 foo.__proto__ = Foo.prototype
 Foo.call(foo)
 
@@ -61,11 +61,151 @@ console.log(foo.fullname())
  * 4, 在原型上定义属性
  * - Foo.prototype.middleName = 'middleName'; // 新增了属性
  * - Foo.prototype.firstName = 'firstName'; // 覆盖了旧属性
+ * 
+ * 5，instanceof 操作符
+ * - 检查操作符右边的函数原型是否存在于操作符左边的对象的原型链上。
+ *  （每个对象都有 [[prototype]]原型属性，它指向原型对象，而原型对象上有 constructor属性，指向构造函数本身。）
+ * 
+ * 6，类的静态方法
+ * - 相当于在构造函数上添加方法
+ * - function Foo(){} =========> Foo.staticFunc = function(){}
  */
 
 
+// - JavaScript忍者的测试实验
+{
+  function Ninja() {}
+  
+  const ninja = new Ninja();
+  printTrue(typeof ninja === 'object', "The type of the instance is object.");
+  printTrue(ninja instanceof Ninja, 'Instanceof identifies the constructor.');
+  printTrue(ninja.constructor === Ninja, 'The ninja object was created by the Ninja function.');
+  // ninja instanceof Ninja 接近于 ninja.constructor === Ninja
+  // 
+  printDivider();
+}
+
+{
+  const ninja2 = new Ninja();
+  const ninja3 = new ninja2.constructor();
+  printTrue(ninja2 instanceof Ninja, 'It is a Ninja!');
+  printTrue(ninja2 !== ninja3, 'But not the same Ninja!');
+
+  printDivider();
+}
+
+{
+  //
+  function Person() {}
+  Person.prototype.dance = function () {}
+  function Ninja () {}
+
+  Ninja.prototype = {
+    dance: Person.prototype.dance
+  }
+
+  const ninja = new Ninja();
+  printTrue(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype.');
+  printTrue(ninja instanceof Person, 'Ninja receives functionality from the Person prototype.');
+  printTrue(ninja instanceof Object, 'Ninja receives functionality from the Object prototype.');
+
+  printDivider();
+}
+
+{
+  // 使用原型实现继承
+  function Person() {}
+  Person.prototype.dance = function () {}
+  function Ninja() {}
+  Ninja.prototype = new Person()
+
+  const ninja = new Ninja();
+  printTrue(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype');
+  printTrue(ninja instanceof Person, '... and the Person prototype');
+  printTrue(ninja instanceof Object, '... and the Object prototype');
+  printTrue(typeof ninja.dance === 'function', '... and can dance!');
+  printTrue(ninja.constructor !== Ninja, 'But (ninja.constructor === Ninja) has problem!');
+
+  // 解决 ninja.constructor !== Ninja 问题
+  Object.defineProperty(Ninja.prototype, 'constructor', {
+    enumerable: false,
+    value: Ninja,
+    writable: true,
+  });
+
+  const ninja2 = new Ninja();
+  printTrue(ninja2.constructor === Ninja, 'Connection from ninja instances to Ninja constructor reestablished!');
+  for (let prop in Ninja.prototype) {
+    printTrue(prop === 'dance', 'The only enumerable property is dance!');
+  }
+
+  printDivider();
+}
+
+{
+  // 配置属性
+  var ninja = {};
+  ninja.name = 'Yoshi';
+  ninja.weapon = 'kusarigama';
+
+  Object.defineProperty(ninja, 'sneaky', {
+    configurable: false, // 是否可修改或删除
+    enumerable: false, // 是否可遍历
+    value: true, // 指定属性的值
+    writable: true, // 是否可赋值
+  });
+
+  printTrue('sneaky' in ninja, `We can access the new property: sneaky`);
+  for (let prop in ninja) {
+    printTrue(prop !== undefined, `An enumerated property: ${prop}`);
+  }
+
+  printDivider();
+}
+
+{
+  // 在 ES6 中创建类
+  class Ninja {
+    constructor(name, level) {
+      this.name = name;
+      this.level = level;
+    }
+    swingSword() {
+      return true;
+    }
+    static compare(ninja1, ninja2) {
+      return ninja1.level - ninja2.level;
+    }
+  }
+
+  var ninja = new Ninja('Yoshi', 4);
+  printTrue(ninja instanceof Ninja, 'Our ninja is a Ninja');
+  printTrue(ninja.name === 'Yoshi', 'named Yoshi');
+  printTrue(ninja.swingSword(), 'and he can swing a sword.');
+
+  const ninja2 = new Ninja('Hattori', 3);
+  printTrue(!('compare' in ninja) && !('compare' in ninja2), 'A ninja instance doesn"t know how to compare');
+  printTrue(Ninja.compare(ninja, ninja2) > 0, 'The Ninja class can do the comparison!');
+  printTrue(!('swingSword' in Ninja), 'The Ninja class cannot swing a sword.');
+
+  // 继承
+  class FatNinja extends Ninja {
+    constructor(name, level, weight) {
+      super(name, level);
+      this.weight = weight;
+    }
+  }
+
+  const fatNinja = new FatNinja('Big T', 60, 220);
+  printTrue(fatNinja.swingSword(), `${fatNinja.name} can swing a sword too.`);
+
+  printDivider();
+}
 
 
+
+
+return;
 
 
 // ---------------------- ----------------------- ------------------------
@@ -184,3 +324,19 @@ class Square extends Polygon {
 }
 
 var square = new Square(2);
+
+
+// - 私有方法
+function printTrue(condition, mseeage) {
+  if (condition) {
+    console.log(mseeage + ' ✅');
+  }
+  else {
+    console.log(mseeage + ' ❌');
+  }
+}
+
+function printDivider() {
+  console.log('-----------------------------------------------------')
+  console.log('')
+}
