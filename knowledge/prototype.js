@@ -202,7 +202,24 @@ console.log(foo.fullname())
   printDivider();
 }
 
+{
+  // getter setter
+  const ninjaCollection = {
+    ninjas: ['Yoshi', 'Huma', 'Hattori'],
+    get firstNinja() {
+      return this.ninjas[0];
+    },
+    set firstNinja(value) {
+      this.ninjas[0] = value;
+    },
+  }
 
+  printTrue(ninjaCollection.firstNinja === 'Yoshi', `The first ninja is ${ninjaCollection.firstNinja}`);
+  ninjaCollection.firstNinja = 'Big T';
+  printTrue(ninjaCollection.firstNinja === 'Big T', `But now first ninja is ${ninjaCollection.firstNinja}`);
+
+  printDivider();
+}
 
 
 return;

@@ -32,6 +32,7 @@ function getJSON(url, timeout = 500) {
 function * getJSONGenerator() {
   try {
     // 用生成器执行异步操作
+    // 先执行 getJSON 函数，遇到 yield 会被挂起等待下次执行。
     const ninjas = yield getJSON("data/ninjas.json");
     const missions = yield getJSON(ninjas[0].missionsUrl);
     const missionDescription = yield getJSON(missions[0].detailsUrl);
@@ -76,12 +77,12 @@ function async(generator) {
 
     const iteratorValue = iteratorResult.value;
     if (iteratorValue instanceof Promise) {
-      // 取出的对象是 Promise 对象，开始执行。按我理解就是把执行体放进微任务队列中，等待未来某一个事件循环取出处理。
+      // 取出的对象是 Promise 对象，调用then后，开始执行。
       iteratorValue.then(res => handle(iterator.next(res))).catch(err => iterator.throw(err));
 
       // 补充 1
-      // 这里，Promise对象的回调闭包捕获了 iterator迭代器 和 handle 函数；因此在下一个事件循环取出执行时，上下文还在。
-      // 取出Promise微任务执行时:
+      // 这里，Promise对象的回调闭包捕获了 iterator迭代器 和 handle 函数；因此如果异步执行，那么在下一个事件循环取出执行时，上下文还在。
+      // 执行 Promise执行体时:
       // 如果遇到网络IO或文件IO，就把任务包装并提交到事件多路分解器（Event Demultiplexer）（或叫事件通知接口）处理；
       // IO操作完成后，分解器会把结果包装成事件对象，提交到宏任务队列中，等待未来某一个事件循环取出处理。
       // 如果遇到 timer（定时器）之类的，就把任务包装并提交到timer 线程中处理；
