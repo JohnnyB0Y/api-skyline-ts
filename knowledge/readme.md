@@ -1,4 +1,4 @@
-#### 进程、CPU 和操作系统细节
+### 进程、CPU 和操作系统细节
 ###### 摘抄自《JavaScript 权威指南》
 ```JS
 const os = require('os');
