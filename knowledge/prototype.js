@@ -6,6 +6,7 @@
 
 // https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Inheritance_and_the_prototype_chain
 
+const printer = require('./tools').printer
 
 /**
  * 继承与原型链
@@ -77,21 +78,21 @@ console.log(foo.fullname())
   function Ninja() {}
   
   const ninja = new Ninja();
-  printTrue(typeof ninja === 'object', "The type of the instance is object.");
-  printTrue(ninja instanceof Ninja, 'Instanceof identifies the constructor.');
-  printTrue(ninja.constructor === Ninja, 'The ninja object was created by the Ninja function.');
+  printer.true(typeof ninja === 'object', "The type of the instance is object.");
+  printer.true(ninja instanceof Ninja, 'Instanceof identifies the constructor.');
+  printer.true(ninja.constructor === Ninja, 'The ninja object was created by the Ninja function.');
   // ninja instanceof Ninja 接近于 ninja.constructor === Ninja
   // 
-  printDivider();
+  printer.divider();
 }
 
 {
   const ninja2 = new Ninja();
   const ninja3 = new ninja2.constructor();
-  printTrue(ninja2 instanceof Ninja, 'It is a Ninja!');
-  printTrue(ninja2 !== ninja3, 'But not the same Ninja!');
+  printer.true(ninja2 instanceof Ninja, 'It is a Ninja!');
+  printer.true(ninja2 !== ninja3, 'But not the same Ninja!');
 
-  printDivider();
+  printer.divider();
 }
 
 {
@@ -105,11 +106,11 @@ console.log(foo.fullname())
   }
 
   const ninja = new Ninja();
-  printTrue(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype.');
-  printTrue(ninja instanceof Person, 'Ninja receives functionality from the Person prototype.');
-  printTrue(ninja instanceof Object, 'Ninja receives functionality from the Object prototype.');
+  printer.true(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype.');
+  printer.true(ninja instanceof Person, 'Ninja receives functionality from the Person prototype.');
+  printer.true(ninja instanceof Object, 'Ninja receives functionality from the Object prototype.');
 
-  printDivider();
+  printer.divider();
 }
 
 {
@@ -120,11 +121,11 @@ console.log(foo.fullname())
   Ninja.prototype = new Person()
 
   const ninja = new Ninja();
-  printTrue(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype');
-  printTrue(ninja instanceof Person, '... and the Person prototype');
-  printTrue(ninja instanceof Object, '... and the Object prototype');
-  printTrue(typeof ninja.dance === 'function', '... and can dance!');
-  printTrue(ninja.constructor !== Ninja, 'But (ninja.constructor === Ninja) has problem!');
+  printer.true(ninja instanceof Ninja, 'Ninja receives functionality from the Ninja prototype');
+  printer.true(ninja instanceof Person, '... and the Person prototype');
+  printer.true(ninja instanceof Object, '... and the Object prototype');
+  printer.true(typeof ninja.dance === 'function', '... and can dance!');
+  printer.true(ninja.constructor !== Ninja, 'But (ninja.constructor === Ninja) has problem!');
 
   // 解决 ninja.constructor !== Ninja 问题
   Object.defineProperty(Ninja.prototype, 'constructor', {
@@ -134,12 +135,12 @@ console.log(foo.fullname())
   });
 
   const ninja2 = new Ninja();
-  printTrue(ninja2.constructor === Ninja, 'Connection from ninja instances to Ninja constructor reestablished!');
+  printer.true(ninja2.constructor === Ninja, 'Connection from ninja instances to Ninja constructor reestablished!');
   for (let prop in Ninja.prototype) {
-    printTrue(prop === 'dance', 'The only enumerable property is dance!');
+    printer.true(prop === 'dance', 'The only enumerable property is dance!');
   }
 
-  printDivider();
+  printer.divider();
 }
 
 {
@@ -155,12 +156,12 @@ console.log(foo.fullname())
     writable: true, // 是否可赋值
   });
 
-  printTrue('sneaky' in ninja, `We can access the new property: sneaky`);
+  printer.true('sneaky' in ninja, `We can access the new property: sneaky`);
   for (let prop in ninja) {
-    printTrue(prop !== undefined, `An enumerated property: ${prop}`);
+    printer.true(prop !== undefined, `An enumerated property: ${prop}`);
   }
 
-  printDivider();
+  printer.divider();
 }
 
 {
@@ -179,14 +180,14 @@ console.log(foo.fullname())
   }
 
   var ninja = new Ninja('Yoshi', 4);
-  printTrue(ninja instanceof Ninja, 'Our ninja is a Ninja');
-  printTrue(ninja.name === 'Yoshi', 'named Yoshi');
-  printTrue(ninja.swingSword(), 'and he can swing a sword.');
+  printer.true(ninja instanceof Ninja, 'Our ninja is a Ninja');
+  printer.true(ninja.name === 'Yoshi', 'named Yoshi');
+  printer.true(ninja.swingSword(), 'and he can swing a sword.');
 
   const ninja2 = new Ninja('Hattori', 3);
-  printTrue(!('compare' in ninja) && !('compare' in ninja2), 'A ninja instance doesn"t know how to compare');
-  printTrue(Ninja.compare(ninja, ninja2) > 0, 'The Ninja class can do the comparison!');
-  printTrue(!('swingSword' in Ninja), 'The Ninja class cannot swing a sword.');
+  printer.true(!('compare' in ninja) && !('compare' in ninja2), 'A ninja instance doesn"t know how to compare');
+  printer.true(Ninja.compare(ninja, ninja2) > 0, 'The Ninja class can do the comparison!');
+  printer.true(!('swingSword' in Ninja), 'The Ninja class cannot swing a sword.');
 
   // 继承
   class FatNinja extends Ninja {
@@ -197,9 +198,9 @@ console.log(foo.fullname())
   }
 
   const fatNinja = new FatNinja('Big T', 60, 220);
-  printTrue(fatNinja.swingSword(), `${fatNinja.name} can swing a sword too.`);
+  printer.true(fatNinja.swingSword(), `${fatNinja.name} can swing a sword too.`);
 
-  printDivider();
+  printer.divider();
 }
 
 {
@@ -214,11 +215,11 @@ console.log(foo.fullname())
     },
   }
 
-  printTrue(ninjaCollection.firstNinja === 'Yoshi', `The first ninja is ${ninjaCollection.firstNinja}`);
+  printer.true(ninjaCollection.firstNinja === 'Yoshi', `The first ninja is ${ninjaCollection.firstNinja}`);
   ninjaCollection.firstNinja = 'Big T';
-  printTrue(ninjaCollection.firstNinja === 'Big T', `But now first ninja is ${ninjaCollection.firstNinja}`);
+  printer.true(ninjaCollection.firstNinja === 'Big T', `But now first ninja is ${ninjaCollection.firstNinja}`);
 
-  printDivider();
+  printer.divider();
 }
 
 
@@ -341,19 +342,3 @@ class Square extends Polygon {
 }
 
 var square = new Square(2);
-
-
-// - 私有方法
-function printTrue(condition, mseeage) {
-  if (condition) {
-    console.log(mseeage + ' ✅');
-  }
-  else {
-    console.log(mseeage + ' ❌');
-  }
-}
-
-function printDivider() {
-  console.log('-----------------------------------------------------')
-  console.log('')
-}
