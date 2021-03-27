@@ -19,7 +19,14 @@ function printDivider() {
   console.log('')
 }
 
+function printAll(arr = []) {
+  arr.forEach(val => {
+    console.log(val);
+  });
+}
+
 exports.printer = new function() {
   this.true = printTrue
   this.divider = printDivider
+  this.all = printAll
 }
