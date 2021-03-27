@@ -64,10 +64,10 @@ const printer = require('./tools').printer
 
   // .every() 所有元素都为 true，最终返回 true
   printer.true(ninjas.every(ninja => ninja.length > 1), 'All ninja"s name length > 1')
-  printer.true(ninjas.every(ninja => ninja.length > 2) === false, 'All ninja"s name length > 2 ? No, because Aj is not.')
+  printer.true(ninjas.every(ninja => ninja.length > 2) === false, 'All ninja\'s name length > 2 ? No, because Aj is not.')
 
   // .some() 存在元素返回 true，最终就返回 true
-  printer.true(ninjas.some(ninja => ninja.length === 2), 'Has some ninja"s name length is 2 ? Yes, Aj is.')
+  printer.true(ninjas.some(ninja => ninja.length === 2), 'Has some ninja\'s name length is 2 ? Yes, Aj is.')
 
 
   // 元素查找 -----------------------------------
@@ -78,12 +78,12 @@ const printer = require('./tools').printer
   // 使用 findIndex() 在数组中查找元素的索引，返回第一个在回调函数中返回true 的元素索引；
 
   console.log(
-    'Who"s name length is 2 ?',
+    'Who\'s name length is 2 ?',
     ninjas.find(ninja => ninja.length === 2)
   )
 
   console.log(
-    'Who"s name length > 2 ?',
+    'Who\'s name length > 2 ?',
     ninjas.filter(ninja => ninja.length > 2)
   )
 
