@@ -1,30 +1,70 @@
 ### JavaScript 代码是如何执行的？
+###### 准备阶段
+```JS
+- 准备阶段，可以理解为JS引擎启动，并初始化好解析JavaScript代码的运行环境。
+  - 初始化管理执行上下文的栈（JS调用栈）。
+  - ...
+```
+
 ###### 编译阶段
+```JS
 - 什么代码会被 Js引擎编译？
   - 当执行全局代码时，会编译并创建全局执行上下文；
   - 当调用函数时，函数体内的代码会被编译，并创建函数执行上下文；
   - 当使用 eval 函数时，会把JS字符串编译并创建执行上下文；
+```
 
+###### 执行阶段
+```JS
+- 1，执行阶段，就是按顺序一行一行地执行，操作有：调用函数、执行赋值语句、创建执行上下文、入栈、出栈等；
+- 每调用一个函数，JS引擎会为其创建一个执行上下文，并把该执行上下文压入栈中，然后开始执行函数代码；
+- 如，函数A 调用了 函数B，JS引擎首先给 函数B 创建执行上下文，然后把该上下文压入调用栈的栈顶；
+
+- 2，当函数执行完成后，JS引擎会将该函数的执行上下文从栈顶弹出；（不一定销毁，看情况，如，生成器函数）
+
+- 3，执行函数时，先在当前执行上下文的变量环境对象查找该函数定义的引用，如果存在就执行该函数。
+- 如果不存在，就沿着 outer 指向的外部执行上下文的变量环境对象继续找。（最终找不到就报错）
+
+- 4，执行语句包含变量时，就需要查找该变量，先在当前执行上下文的词法环境对象查找，不存在就去变量环境对象查找。
+- 还不存在就沿着 outer 指向的外部执行上下文 按同样的次序查找。
+```
+
+###### 调试技巧
+```JS
+- console.trace() 可以打印出函数调用关系；
+- chrome devTool，在 source标签页给代码打断点然后刷新页面，可以在右边看到调用堆栈信息；
+- 浏览器环境 anonymous 是全局函数入口，NodeJS 会有不同。
+- 浏览器等环境，可能有缓存，试验的时候最好新开一个页面调式。
+```
+
+###### 过程伪代码
 ```JS
 who()
 console.log(name)
 var name = 'Kobe Bryant'
 function who() {
+  var name = 'JavaScript'
   console.log('Black Mamba')
+  console.log(name)
 }
 
-// 变量提升过程
+// 变量提升过程 1️⃣
 - JavaScript引擎 先创建执行上下文对象，里面大概包含变量环境对象、词法环境对象、可执行代码（优化后）；
-- 对于变量声明，引擎会在变量环境对象（Variable Environment）中创建 'name' 属性，并使用 undefined 对其初始化；
+- 对于变量声明，引擎会在变量环境对象（Variable Environment）中创建 'name' 属性，并使用 undefined 或其他值 对其初始化；
 - 对于函数声明，引擎会把函数定义存储到堆（Heap）中，并在变量环境对象中创建一个 'who' 属性，并指向堆中的函数位置；
 - 如果遇到同名的函数声明，JS引擎 会选择最后声明的那个覆盖前面的。
 - 如果变量声明和函数声明同名，那么 JS引擎会忽略变量的声明，而采用函数的声明。
 
 // ------------ 变量提升后的内存结构伪代码（可能是错的）
+
 executionContext: {               // 当前执行上下文
   variableEnvironment: {          // 变量环境对象
     name: undefined
-    who: function() { console.log('Black Mamba') }
+    who: function() { 
+      var name = 'JavaScript'
+      console.log('Black Mamba')
+      console.log(name)
+    }
   },
   lexicalEnvironment: {           // 词法环境对象
 
@@ -32,15 +72,46 @@ executionContext: {               // 当前执行上下文
   excutionCode: function() {      // 可执行代码
     who()
     console.log(name)
+    name = 'Kobe Bryant'
   },
   outer: externalExecutionContext // 外部的执行上下文对象
 }
 
+whoExcCtx {                       // who函数的执行上下文对象
+  varEnv: {                       // 变量环境对象
+    name: undefined
+  },
+  lexEnv: {                       // 词法环境对象
 
+  },
+  excCode: function() {           // 可执行代码
+    name = 'JavaScript'
+    console.log('Black Mamba')
+    console.log(name)
+  },
+  outer: executionContext         // 外部的执行上下文对象
+}
+
+// 执行代码过程 2️⃣
+- JS引擎做完编译工作后（包括变量提升等内容），执行代码前，会先把当前执行上下文压入栈顶；
+
+- 当执行 who() 语句时，先在当前执行上下文的变量环境对象查找该函数定义的引用，找到并执行 who函数；
+- 此时，会走一遍 1️⃣  2️⃣ 的流程。创建 whoExeCtx对象，并设置 whoExeCtx.varEnv.name = undefined；
+- 然后执行 name = 'JavaScript' 语句，相当于 whoExeCtx.varEnv.name = 'JavaScript'；
+- 接着执行 console.log('Black Mamba') 语句，console.log 在Global变量环境对象中找到，输出 'Black Mamba'；
+- 再接着执行 console.log(name) 语句，在 whoExeCtx.varEnv 中找到 'name'的值，输出 'JavaScript'；
+- who函数执行完毕，返回执行权给上一级函数，引擎把whoExeCtx 从栈顶弹出；
+
+- 调用完 who函数，回到当前上下文继续执行 console.log(name)语句，变量'name'在当前执行上下文变量环境对象中找到。
+- 但变量'name'还没有执行我们指定的赋值语句，处于系统默认初始化的值，所以最终输出 'undefined或其他值'；
+- 接着执行 name = 'Kobe Bryant' 语句，把当前执行上下文中的变量环境对象的 'name'属性的值修改为 'Kobe Bryant'；
+- 当前上下文执行完毕，返回执行权给上一级函数，从调用栈弹出；
+
+- !结束 - ✿✿ヽ(°▽°)ノ✿
 ```
 
 
-### 进程、CPU 和操作系统细节
+### NodeJS 进程、CPU 和操作系统细节
 ###### 摘抄自《JavaScript 权威指南》
 ```JS
 const os = require('os');
