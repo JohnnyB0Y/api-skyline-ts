@@ -16,7 +16,6 @@
 - 创建执行上下文
   - 如果当前的执行上下文是全局执行上下文，那么 它的 'outer' 属性指向 NULL；
   - 如果是函数执行上下文，那么 它的 'outer' 属性指向函数定义时的环境；换句话说，当它被存入堆中的时候就指定了。
-  - 我比较习惯用捕获变量来理解，当前函数定义时，捕获了外部环境的变量。相当于说，这些变量被函数强引用（闭包）；
 
 - 进行变量提升
   - 对于 var声明的变量 和 函数声明，存入 变量环境对象中；
@@ -71,12 +70,13 @@ function who() {
 
 executionContext: {               // 当前执行上下文
   variableEnvironment: {          // 变量环境对象
-    name: undefined
+    name: undefined,
     who: function() { 
       var name = 'JavaScript'
       console.log('Black Mamba')
       console.log(name)
-    }
+    },
+    outer: externalExecutionContext // 外部的执行上下文对象
   },
   lexicalEnvironment: [],         // 词法环境对象
   excutionCode: function() {      // 可执行代码
@@ -84,12 +84,12 @@ executionContext: {               // 当前执行上下文
     console.log(name)
     name = 'Kobe Bryant'
   },
-  outer: externalExecutionContext // 外部的执行上下文对象
 }
 
 whoExcCtx {                       // who函数的执行上下文对象
   varEnv: {                       // 变量环境对象
-    name: undefined
+    name: undefined,
+    outer: executionContext       // 外部的执行上下文对象
   },
   lexEnv: [],                     // 词法环境对象
   excCode: function() {           // 可执行代码
@@ -97,7 +97,6 @@ whoExcCtx {                       // who函数的执行上下文对象
     console.log('Black Mamba')
     console.log(name)
   },
-  outer: executionContext         // 外部的执行上下文对象
 }
 
 // 执行代码过程 2️⃣

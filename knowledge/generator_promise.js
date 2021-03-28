@@ -6,6 +6,7 @@
 
 /**
  * 全局上下文环境（全局词法环境）
+ * outer ----> NULL
  * --------------------------------------------------------
  * getJSON => function
  * async => function
@@ -47,7 +48,7 @@ function async(generator) {
 
   /**
    * async 执行上下文环境
-   * environment ----> 指向 全局上下文环境
+   * outer ----> 指向 全局上下文环境
    * -------------------------------------------------------------
    * generator = 生成器函数
    * iterator = 函数迭代器
@@ -62,7 +63,7 @@ function async(generator) {
 
     /**
      * handle 执行上下文
-     * environment ----> 指向 async 执行上下文环境（后面在Promise闭包内被调用时，就指向闭包的执行上下文环境）
+     * outer ----> 指向 async 执行上下文环境
      * ------------------------------------------------------------------
      * iteratorResult = 迭代器返回的值对象 {value: Promise, done: boolean}
      * iteratorValue = Promise对象，执行 getJSON("data/ninjas.json") 返回的。
