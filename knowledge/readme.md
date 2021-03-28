@@ -1,3 +1,45 @@
+### JavaScript 代码是如何执行的？
+###### 编译阶段
+- 什么代码会被 Js引擎编译？
+  - 当执行全局代码时，会编译并创建全局执行上下文；
+  - 当调用函数时，函数体内的代码会被编译，并创建函数执行上下文；
+  - 当使用 eval 函数时，会把JS字符串编译并创建执行上下文；
+
+```JS
+who()
+console.log(name)
+var name = 'Kobe Bryant'
+function who() {
+  console.log('Black Mamba')
+}
+
+// 变量提升过程
+- JavaScript引擎 先创建执行上下文对象，里面大概包含变量环境对象、词法环境对象、可执行代码（优化后）；
+- 对于变量声明，引擎会在变量环境对象（Variable Environment）中创建 'name' 属性，并使用 undefined 对其初始化；
+- 对于函数声明，引擎会把函数定义存储到堆（Heap）中，并在变量环境对象中创建一个 'who' 属性，并指向堆中的函数位置；
+- 如果遇到同名的函数声明，JS引擎 会选择最后声明的那个覆盖前面的。
+- 如果变量声明和函数声明同名，那么 JS引擎会忽略变量的声明，而采用函数的声明。
+
+// ------------ 变量提升后的内存结构伪代码（可能是错的）
+executionContext: {               // 当前执行上下文
+  variableEnvironment: {          // 变量环境对象
+    name: undefined
+    who: function() { console.log('Black Mamba') }
+  },
+  lexicalEnvironment: {           // 词法环境对象
+
+  },
+  excutionCode: function() {      // 可执行代码
+    who()
+    console.log(name)
+  },
+  outer: externalExecutionContext // 外部的执行上下文对象
+}
+
+
+```
+
+
 ### 进程、CPU 和操作系统细节
 ###### 摘抄自《JavaScript 权威指南》
 ```JS
