@@ -17,7 +17,7 @@ import { itemsRouter } from "./items/items.router";
 import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
 import { Safe } from "./common/safe_access/safe";
-import { RedisClient } from "redis"
+import { createClient, RedisClient } from "redis"
 
 export const heartbeatReq = 'ping';
 export const heartbeatRes = 'pong';
@@ -55,12 +55,24 @@ export function startHttpServer() {
     console.log('redis error:', err);
   })
 
-  client.set("key", "value", err => {
-    console.log(err)
-  });
-  client.get("key", val => {
-    console.log(val)
-  });
+  setTimeout(() => {
+    client.set("key", "value", (err, ok) => {
+      if (err) {
+        console.log('set val error:', err)
+      }
+      else {
+        console.log('set val:', ok)
+      }
+    });
+    client.get("key", (err, val) => {
+      if (err) {
+        console.log('get val error:', err)
+      }
+      else {
+        console.log('get val:', val)
+      }
+    });
+  }, 500);
 
   /**
    * Server Activation
