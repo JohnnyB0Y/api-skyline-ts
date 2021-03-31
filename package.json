@@ -12,11 +12,13 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/redis": "^2.8.28",
     "axios": "^0.21.1",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
-    "helmet": "^4.4.1"
+    "helmet": "^4.4.1",
+    "redis": "^3.0.2"
   },
   "devDependencies": {
     "@types/cors": "^2.8.10",

@@ -17,6 +17,7 @@ import { itemsRouter } from "./items/items.router";
 import { errorHandler } from "./middleware/error.middleware";
 import { notFoundHandler } from "./middleware/not-found.middleware";
 import { Safe } from "./common/safe_access/safe";
+import { RedisClient } from "redis"
 
 export const heartbeatReq = 'ping';
 export const heartbeatRes = 'pong';
@@ -49,6 +50,18 @@ export function startHttpServer() {
   app.use(errorHandler);
   app.use(notFoundHandler);
 
+  const client = new RedisClient({url: 'redis://:@localhost:6379/0'})
+  client.on("error", err => {
+    console.log('redis error:', err);
+  })
+
+  client.set("key", "value", err => {
+    console.log(err)
+  });
+  client.get("key", val => {
+    console.log(val)
+  });
+
   /**
    * Server Activation
    */
@@ -56,18 +69,18 @@ export function startHttpServer() {
   app.listen(PORT, () => {
     console.log(`Listening on prot ${PORT}, pid ${process.pid}`);
 
-    setTimeout(() => {
-      // 模拟抛异常和阻塞
-      // 模拟并发 siege -c 200 -t 10s http://localhost:7000/api/menu/items
-      if (process.pid % 2 === 0) {
-        throw new Error('Ooops!!!!!!!!');
-      }
-      else {
-        while(true) {
-        }
-      }
+    // setTimeout(() => {
+    //   // 模拟抛异常和阻塞
+    //   // 模拟并发 siege -c 200 -t 10s http://localhost:7000/api/menu/items
+    //   if (process.pid % 2 === 0) {
+    //     throw new Error('Ooops!!!!!!!!');
+    //   }
+    //   else {
+    //     while(true) {
+    //     }
+    //   }
 
-    }, Math.ceil(Math.random() * 3) * 3000);
+    // }, Math.ceil(Math.random() * 3) * 3000);
 
   });
 
@@ -89,7 +102,7 @@ export function startHttpServer() {
   process.on('message', (msg) => {
     // 💓 心跳检测
     if (Safe.stringEqual(msg, heartbeatReq)) {
-      console.log(msg, process.pid);
+      // console.log(msg, process.pid);
       process.send?.(heartbeatRes);
     }
   });

@@ -77,7 +77,7 @@ function forkNewWorker(): cluster.Worker {
 
   worker.on('message', (msg) => {
     if ( Safe.stringEqual(msg, heartbeatRes) ) {
-      console.log(msg, worker.process.pid);
+      // console.log(msg, worker.process.pid);
       miss--;
     }
   });
