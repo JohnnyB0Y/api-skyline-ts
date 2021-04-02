@@ -13,7 +13,7 @@
  */
 
 // 调用
-async(getJSONGenerator);
+// async(getJSONGenerator);
 
 
 function getJSON(url, timeout = 500) {
@@ -40,7 +40,7 @@ function * getJSONGenerator() {
     console.log(ninjas, missions, missionDescription);
     // Study the mission details
   } catch (e) {
-    console.log("Oh no, we weren`t able to get the mission details.")
+    console.log("Oh no, we weren\'t able to get the mission details.")
   }
 }
 
@@ -111,4 +111,237 @@ function async(generator) {
   }
 
   // async 执行完成，并返回执行权。
+}
+
+
+/**
+ * 模仿官方 Promise效果
+ */
+
+function MyPromise(executor) {
+  const self = this
+
+  self.executor = executor
+  self.state = 'pending'
+  self.value = null 
+  self.reason = null
+
+  self.onfulfilled = null
+  self.onrejected = null
+  self.nextPromise = null
+
+  // ----------- then --------------
+  self.then = function (onfulfilled = val => {}, onrejected = reason => {
+    throw new Error(reason)
+  }) {
+    self.onfulfilled = onfulfilled
+    self.onrejected = onrejected
+
+    const nextPromise = new MyPromise((resolve, reject) => {
+
+    })
+    self.nextPromise = nextPromise
+    return nextPromise
+  }
+
+  self.catchErr = function (onrejected) {
+    self.onrejected = onrejected
+  }
+
+  self.executePromise = function() {
+    try {
+      if (self.executor) {
+        self.executor(_resolve, _reject)
+      }
+    } catch (err) {
+      _reject(err.reason)
+    }
+  }
+
+  self.executeOnfulfilled = function (nextPromise) {
+
+    // 模拟添加到微任务队列
+    process.nextTick(() => {
+      try {
+        if (self.onfulfilled) {
+          const promise = self.onfulfilled(self.value)
+          if (promise) { // 有值，是用户自定义的
+            // console.log(promise)
+            // promise.executeOnfulfilled()
+          }
+        }
+        
+      } catch (err) {
+        _reject(err.message)
+      }
+    })
+  }
+
+  function _resolve(val) {
+    // 成功
+    self.state = _nameForState(1)
+    self.value = val
+    self.executeOnfulfilled()
+
+    let next = self.nextPromise
+    while(next) {
+      next.executeOnfulfilled()
+      next = next.nextPromise
+    }
+
+  }
+
+  function _reject(reason) {
+    // 失败
+    self.state = _nameForState(2)
+    self.reason = reason
+    if (self.onrejected) {
+      self.onrejected(reason)
+    }
+  }
+
+  function _nameForState(state) {
+    switch (state) {
+      case 0:
+        return 'pending'
+      case 1: 
+        return 'fulfilled'
+      case 2: 
+        return 'rejected'
+    }
+  }
+
+  // 如果有执行体，先执行
+  self.executePromise()
+}
+
+// customPromise()
+originPromise()
+
+/**
+  promise 1
+  promise 6 - 1
+  promise 6 - 2
+  promise 1 timeout
+  promise 2 haha
+  promise 4 - 1
+  promise 4 - 3
+  promise 4 - 2
+  promise 4 - 4
+  promise 5 - 1
+  promise 5 - 2
+  promise 2 timeout haha
+  promise 3 timeout undefined
+ */
+
+function customPromise() {
+  const p = new MyPromise((resolve, reject) => {
+    console.log('promise 1')
+    setTimeout(() => {
+      console.log('promise 1 timeout')
+      resolve('haha')
+    }, 0);
+  })
+  
+  p.then(val => {
+    console.log(`promise 2 ${val}`)
+    setTimeout(() => {
+      console.log(`promise 2 timeout ${val}`)
+    }, 0);
+  })
+  .then(val => {
+  
+    setTimeout(() => {
+      console.log(`promise 3 timeout ${val}`)
+    }, 0);
+  
+    const promise = new MyPromise((resolve, reject) => {
+      console.log('promise 4 - 1')
+      resolve()
+    })
+  
+    promise.then(val => {
+      console.log('promise 4 - 2')
+    })
+  
+    const promise2 = new MyPromise((resolve, reject) => {
+      console.log('promise 4 - 3')
+      resolve()
+    })
+    .then(val => {
+      console.log('promise 4 - 4')
+    })
+  
+    return promise
+  })
+  .then(val => {
+    console.log('promise 5 - 1')
+  })
+  .then(val => {
+    console.log('promise 5 - 2')
+  })
+  
+  new MyPromise((resolve, reject) => {
+    console.log('promise 6 - 1')
+    resolve()
+  })
+  .then(val => {
+    console.log('promise 6 - 2')
+  })
+}
+
+function originPromise() {
+  const p = new Promise((resolve, reject) => {
+    console.log('promise 1')
+    setTimeout(() => {
+      console.log('promise 1 timeout')
+      resolve('haha')
+    }, 0);
+  })
+  
+  p.then(val => {
+    console.log(`promise 2 ${val}`)
+    setTimeout(() => {
+      console.log(`promise 2 timeout ${val}`)
+    }, 0);
+  })
+  .then(val => {
+  
+    setTimeout(() => {
+      console.log(`promise 3 timeout ${val}`)
+    }, 0);
+  
+    const promise = new Promise((resolve, reject) => {
+      console.log('promise 4 - 1')
+      resolve()
+    })
+  
+    promise.then(val => {
+      console.log('promise 4 - 2')
+    })
+  
+    const promise2 = new Promise((resolve, reject) => {
+      console.log('promise 4 - 3')
+      resolve()
+    })
+    .then(val => {
+      console.log('promise 4 - 4')
+    })
+  
+    return promise
+  })
+  .then(val => {
+    console.log('promise 5 - 1')
+  })
+  .then(val => {
+    console.log('promise 5 - 2')
+  })
+  
+  new Promise((resolve, reject) => {
+    console.log('promise 6 - 1')
+    resolve()
+  })
+  .then(val => {
+    console.log('promise 6 - 2')
+  })
 }
