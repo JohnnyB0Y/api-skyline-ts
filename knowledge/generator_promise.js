@@ -118,7 +118,7 @@ function async(generator) {
  * 模仿官方 Promise效果
  */
 
-function MyPromise(executor) {
+function AGPromise(executor) {
   const self = this
 
   self.executor = executor
@@ -129,24 +129,25 @@ function MyPromise(executor) {
   self.onfulfilled
   self.onrejected
   self.nextPromise
+  self.errorCatch
 
   // ----------- then --------------
   self.then = function (onfulfilled, onrejected) {
     self.onfulfilled = onfulfilled
     self.onrejected = onrejected
 
-    self.nextPromise = new MyPromise()
+    self.nextPromise = new AGPromise()
     return self.nextPromise
   }
 
   self.catch = function (onrejected) {
-    self.onrejected = onrejected
+    self.errorCatch = onrejected
   }
 
   function executePromise(promise) {
     try {
       if (promise.executor) {
-        promise.executor(_resolve, _reject)
+        promise.executor(resolve, reject)
       }
     } catch (err) {
       promiseExecuteOnrejected(promise, err.message)
@@ -155,27 +156,24 @@ function MyPromise(executor) {
 
   function promiseExecuteOnfulfilled(promise, value) {
     if (!promise) return
+    promise.state = nameForState(1)
+    promise.value = value
 
     // 模拟添加到微任务队列
     process.nextTick(() => {
       try {
         if (promise.onfulfilled) {
-          // 先执行自己的then
-          promise.state = _nameForState(1)
+          // 先执行自己的then      
           const userResult = promise.onfulfilled(value)
-          if (userResult instanceof MyPromise) { // 用户自定义的Promise
-            // 执行下一个then
-            nextPromise = promise.nextPromise
-            promise.nextPromise = null
-            lastPromise(userResult).then(val => {
-              promiseExecuteOnfulfilled(nextPromise, val)
-            })
+          if (userResult instanceof AGPromise) { // 用户自定义的Promise，拼接到尾巴
+            penultimateP = penultimatePromise(userResult)
+            penultimateP.errorCatch = penultimateP.errorCatch ? penultimateP.errorCatch : penultimateP.nextPromise.errorCatch
+            penultimateP.nextPromise = promise.nextPromise
           }
-          else {
+          else { // 执行下一个then
             promiseExecuteOnfulfilled(promise.nextPromise, userResult)
           }
         }
-        
       } catch (err) {
         promiseExecuteOnrejected(promise, err.message)
       }
@@ -184,38 +182,40 @@ function MyPromise(executor) {
 
   function promiseExecuteOnrejected(promise, reason) {
     if (!promise) return
+    promise.state = nameForState(2)
+    promise.reason = reason
 
     // 模拟添加到微任务队列
     process.nextTick(() => {
-      promise.state = _nameForState(2)
       if (promise.onrejected) {
         promise.onrejected(reason)
-        // 继续往下执行
-        promiseExecuteOnfulfilled(promise.nextPromise, promise.value)
+        promiseExecuteOnfulfilled(promise.nextPromise, promise.value) // 继续往下执行
       }
-      else {
-        // 捕获总错误，中断执行
-        const onrejected = lastOnrejected(promise)
-        onrejected(reason)
+      else { // 捕获总错误，中断执行
+        const errorCatch = nearestErrorCatch(promise)
+        if (errorCatch) {
+          errorCatch(reason)
+        }
+        else {
+          throw new Error('UnhandledPromiseRejectionWarning: Unhandled promise rejection.')
+        }
       }
     })
   }
 
-  function _resolve(value) {
-    // 成功
-    self.state = _nameForState(1)
-    self.value = value
-    promiseExecuteOnfulfilled(self, value)
+  function resolve(value) {
+    if (self.state === nameForState(0)) { // 成功
+      promiseExecuteOnfulfilled(self, value)
+    }
   }
 
-  function _reject(reason) {
-    // 失败
-    self.state = _nameForState(2)
-    self.reason = reason
-    promiseExecuteOnrejected(self, reason)
+  function reject(reason) {
+    if (self.state === nameForState(0)) { // 失败
+      promiseExecuteOnrejected(self, reason)
+    }
   }
 
-  function _nameForState(state) {
+  function nameForState(state) {
     switch (state) {
       case 0:
         return 'pending'
@@ -226,10 +226,10 @@ function MyPromise(executor) {
     }
   }
 
-  function lastPromise(promise) {
+  function penultimatePromise(promise) { // 倒数第二的 Promise
     let last = promise.nextPromise
-    while (last) {
-      if (!last.nextPromise) {
+    while (last.nextPromise) {
+      if (!last.nextPromise.nextPromise) {
         return last
       }
       last = last.nextPromise
@@ -237,17 +237,15 @@ function MyPromise(executor) {
     return promise
   }
 
-  function lastOnrejected(promise) {
-    let last = promise.nextPromise
-    let lastRejectFunc = promise.onrejected
-    while (last) {
-      if (last.onrejected) {
-        lastRejectFunc = last.onrejected
+  function nearestErrorCatch(promise) { // 最靠近的捕获块
+    let nextP = promise
+    while (nextP) {
+      if (nextP.errorCatch) {
+        return nextP.errorCatch
       }
-      last = last.nextPromise
+      nextP = nextP.nextPromise
     }
-    
-    return lastRejectFunc
+    return null
   }
 
   // 如果有执行体，先执行
@@ -275,7 +273,7 @@ customPromise()
  */
 
 function customPromise() {
-  const p = new MyPromise((resolve, reject) => {
+  const p = new AGPromise((resolve, reject) => {
     console.log('promise 1')
     // reject(0)
     setTimeout(() => {
@@ -298,16 +296,20 @@ function customPromise() {
       console.log(`promise 3 timeout ${val}`)
     }, 0);
   
-    const promise = new MyPromise((resolve, reject) => {
+    const promise = new AGPromise((resolve, reject) => {
       console.log('promise 4 - 1')
       resolve()
+      // reject(1)
     })
   
     promise.then(val => {
       console.log('promise 4 - 2', val)
     })
+    // .catch(reason => {
+    //   console.log('error 4 - 2:', reason)
+    // })
   
-    const promise2 = new MyPromise((resolve, reject) => {
+    const promise2 = new AGPromise((resolve, reject) => {
       console.log('promise 4 - 3')
       resolve()
     })
@@ -327,7 +329,7 @@ function customPromise() {
     console.log('error:', reason)
   })
   
-  new MyPromise((resolve, reject) => {
+  new AGPromise((resolve, reject) => {
     console.log('promise 6 - 1')
     resolve()
   })
@@ -339,7 +341,7 @@ function customPromise() {
 function originPromise() {
   const p = new Promise((resolve, reject) => {
     console.log('promise 1')
-    // reject(0)
+    reject(0)
     setTimeout(() => {
       console.log('promise 1 timeout')
       resolve('haha')
