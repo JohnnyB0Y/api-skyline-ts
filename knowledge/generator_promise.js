@@ -341,7 +341,7 @@ function customPromise() {
 function originPromise() {
   const p = new Promise((resolve, reject) => {
     console.log('promise 1')
-    reject(0)
+    // reject(0)
     setTimeout(() => {
       console.log('promise 1 timeout')
       resolve('haha')
