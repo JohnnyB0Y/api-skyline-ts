@@ -8,7 +8,7 @@
  * 模仿官方 Promise效果
  */
 
- function AGPromise(executor) {
+function AGPromise(executor) {
   const self = this
 
   self.executor = executor
