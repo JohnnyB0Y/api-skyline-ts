@@ -222,6 +222,8 @@ fs.readFile('LA.txt', 'utf8', (err, data) => {
 
 [HTTP Status](https://restfulapi.net/tutorial/http-status/)
 
+[HTTP 权威指南-提炼版](https://github.com/woai30231/http)
+
 ##### 文档
 [Node.js v15.12.0 Documentation](https://nodejs.org/api/errors.html)
 
