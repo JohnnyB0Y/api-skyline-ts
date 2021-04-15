@@ -55,6 +55,25 @@ export function startHttpServer() {
     console.log('redis error:', err);
   })
 
+  // Safe.len 测试代码
+  // let len = Safe.len({__len__: function () {
+  //   return 10
+  // }})
+  
+  // console.log(len, 'len')
+  // console.log(Safe.len({}), 'obj len')
+  // console.log(Safe.len([1, 2, 3]), 'array len')
+  // console.log(Safe.len('12345'), 'str len')
+  // let map = new Map()
+  // map.set('a', 'a')
+  // map.set('b', 'a')
+  // map.size
+  // let set = new Set()
+  // set.add(3)
+  // console.log(Safe.len(map), 'map len')
+  // console.log(Safe.len(set), 'set len')
+  // console.log(Safe.len(new Set([])), 'set len')
+
   setTimeout(() => {
     client.set("key", "value", (err, ok) => {
       if (err) {
